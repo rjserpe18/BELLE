@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "thread": "cpp",
+        "*.tpp": "cpp",
+        "*.tcc": "cpp",
+        "type_traits": "cpp"
+    }
+}
