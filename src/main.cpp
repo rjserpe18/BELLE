@@ -1,242 +1,196 @@
-// run some code based on switching a switch (changing a pin state)
- 
-#define _USE_MATH_DEFINES
-#include <cmath>
-#include <tuple>
+#define UINT_MAX = 65535
 
-#ifndef M_PI
-    #define M_PI 3.14159265358979323846
-#endif
-
+#include <stdint.h>
+#include <iostream>
+#include <bitset>
 #include "mbed.h"
-#include "Sensor.h"
-#include "Array.h"
-#include "Galvo.h"
-#include "math.h"
-
-Serial mac2(USBTX, USBRX);
 
 using namespace std;
 
-// define galvo X and Y pins
-AnalogOut dacX(PA_4);
-AnalogOut dacY(PA_5);
+//using the first four rows of the second block of the CN8 header (on the dev board)
+DigitalOut clockPlus(PA_3);
+DigitalOut clockMinus(PD_7);
 
-//define sensor pins: 
-    //tL - top left
-    //tR - top right
-    //bL - bottom left
-    //bR - bottom right 
+DigitalOut syncPlus(PC_0);
+DigitalOut syncMinus(PD_6);
 
-AnalogIn tL(PC_3);  
-AnalogIn bL(PC_4);  
-AnalogIn tR(PC_1);  
-AnalogIn bR(PC_5);  
+DigitalOut xPlus(PC_3);
+DigitalOut xMinus(PD_5);
 
-//define LED activation representation pins
-DigitalOut tLLED(PF_8);
-DigitalOut tRLED(PF_7);
-DigitalOut bLLED(PF_9);
-DigitalOut bRLED(PG_1);
+DigitalOut yPlus(PC_1);
+DigitalOut yMinus(PD_4);
 
-//initializing the pins to control the laser and its intensity
-DigitalIn button(PC_0);
-DigitalOut laserPower(PA_3);
+Serial mac2(USBTX, USBRX);
 
+//defining the data bits to be sent over the lines 
+volatile uint16_t x;
+volatile uint16_t y;
+volatile int xParity; 
+volatile int yParity;
 
-//helper function for timing 
+//One half of the clocking period, effectively. Steptime of 1us gives 2us period = 0.5Mhz 
+int stepTime = 3;  //in microseconds (using wait_us())
 
-    //TODO: Should probably move to the Thread::sleep_for usage, as that's 
-    //what's recommended in the mbedOS docs
+void write(){
+    //flip the sync signal 
+    syncPlus = !syncPlus;
+    syncMinus = !syncMinus; 
 
-void wait_sec(float time){
-    wait_us(1000000*time);
-}
+            //Control Bit 1
 
-int main() {
-    laserPower = 1;
+    //pull clock high so that the data bits can change
+    clockPlus = !clockPlus;
+    clockMinus = !clockMinus;
 
-    Galvo galvo;
-    galvo.x = &dacX;
-    galvo.y = &dacY;
+    xPlus = 0;
+    xMinus = !xPlus;
 
-    galvo.xOffset = 0;
-    galvo.yOffset = 0;
+    yPlus = 0;
+    yMinus = !yPlus;
 
-    //effectively just setting the galvo to (0,0)
-    galvo.move();
+    wait_us(stepTime);
 
+    //pull clock low to sample the bits 
+    clockPlus = !clockPlus;
+    clockMinus = !clockMinus;
 
+    wait_us(stepTime);
 
-    Sensor topLeft;
-    Sensor topRight;
-    Sensor bottomLeft; 
-    Sensor bottomRight;
+            //Control Bit 2
 
-    //adding each of the sensor objects to their respective pins, LEDs, and names
-    topLeft.sensor = &tL;
-    topRight.sensor = &tR;
-    bottomLeft.sensor = &bL;
-    bottomRight.sensor = &bR;
+    //pull clock high so that the data bits can change
+    clockPlus = !clockPlus;
+    clockMinus = !clockMinus;
 
-    topLeft.led = &tLLED;
-    topRight.led = &tRLED;
-    bottomLeft.led = &bLLED;
-    bottomRight.led = &bRLED;
+    //don't need to do any changing, x and y control bits are the same
 
-    topLeft.name = '1';
-    topRight.name = '2';
-    bottomLeft.name = '3';
-    bottomRight.name = '4';
+    wait_us(stepTime);
 
-    //building the sensor array object and moving the sensors into it 
+    //pull clock low to sample the bits 
+    clockPlus = !clockPlus;
+    clockMinus = !clockMinus;
 
-    Array array;
-    array.sensors[0] = topLeft;
-    array.sensors[1] = topRight;
-    array.sensors[2] = bottomLeft;
-    array.sensors[3] = bottomRight;
+    wait_us(stepTime);
 
-    //initialize the values and calibrate the sensors 
-    
-    //before the initial calibration, we need to set the thresholds all high so that it doesn't get tripped initially
-    for(int i=0; i<4; i++){
-        array.sensors[i].threshold = 1;
+                //Control Bit 3
+
+    //pull clock high so that the data bits can change
+    clockPlus = !clockPlus;
+    clockMinus = !clockMinus;
+
+    //flipping control bits to 1 
+    xPlus = !xPlus;
+    xMinus = !xPlus;
+
+    yPlus = !yPlus;
+    yMinus = !yPlus;
+
+    wait_us(stepTime);
+
+    //pull clock low to sample the bits 
+    clockPlus = !clockPlus;
+    clockMinus = !clockMinus;
+
+    wait_us(stepTime);
+
+    //now sending the control bits
+    for(int i=0; i<16; i++){
+
+        //pull clock high to change bits
+        clockPlus = !clockPlus;
+        clockMinus = !clockMinus;
+
+        xPlus = (x>>(15-i))&1;
+        xMinus = !xPlus;
+        
+        yPlus = (y>>(15-i))&1;
+        yMinus = !yPlus;
+
+        wait_us(stepTime);
+
+        //pull clock low to sample the bits 
+        clockPlus = !clockPlus;
+        clockMinus = !clockMinus;
+
+        wait_us(stepTime);
     }
 
-    array.calibrate();
-    mac2.printf("\n\n");
-    mac2.printf("Initial calibration \r\n");
-    array.printCalibration();
-    mac2.printf("\n\n");
+    //pull clock high to change bits
+    clockPlus = !clockPlus;
+    clockMinus = !clockMinus;
 
-    array.detected = false;
-    int calibrationCounter=0;
-    
-    float amplitude = 0.1;
-    float frequency = 1;
-    int resolution = 50;
-    float stepTime = (float)(1/(resolution*frequency*70));
-    
-    tuple <float,float> offSet;
-    tuple <float,float> coords;
-    
-    float frac;
+    //send the parity bit
+    xPlus = xParity;
+    xMinus = !xPlus;
 
-    while(1) { 
+    yPlus = yParity;
+    yMinus = !yPlus;
 
-        for(int i=0; i<resolution; i++){
+        //flip the sync bit to signal communication of parity bit
+    syncPlus = !syncPlus;
+    syncMinus = !syncPlus;
 
-            array.read();
+    wait_us(stepTime);
 
-            if(array.detected == true){
-                offSet = coords;
-                amplitude = 0.1;
+    //pull the clock low to read parity bits
+    clockPlus = !clockPlus;
+    clockMinus = !clockMinus;
 
-                while(array.detected == true){
-                    array.detected = false;
-                    array.read();
-                }
+    wait_us(stepTime);
 
-                break;
-            }
+    //before we end, we'll increment x and y to see
+    x = x + 0b101;
+    y = y + 0b101;
 
-            frac = (float)i/resolution;
-
-            coords = galvo.circleWithOffset(amplitude, frequency, get<0>(offSet),get<1>(offSet),frac);
-
-            //mac2.printf("x: %f y: %f \r\n",get<0>(coords),get<1>(coords)); 
-
-            galvo.setX(get<0>(coords));
-            galvo.setY(get<1>(coords));
-        }
-
-        amplitude+= 0.01;
-        
-        if(amplitude > 3.5){
-            amplitude = 0.1;
-        }
-
-        wait_sec(stepTime);
-
-     }
+    //now we're ready to start over. The next cycle starts by pulling sync and clock high, 
+    //so we don't need to do that here
 }
 
+int main(){
 
+ 
+    clockPlus = 0;
+    clockMinus = 1;
 
+    //stepTime = 1;
+    syncPlus = 0;
+    syncMinus = 1;
 
+    x = 31353;
+    y = 15342;
+ 
+    xParity = 0;
+    yParity = 1;
 
+    double cosOfPos;
+    double sinOfPos;
+    
+    double step = 0.001;
+    double pos = 0;
 
+    while(1){
 
+        cosOfPos = cos(pos);
+        sinOfPos = sin(pos);
 
+        x = abs(sinOfPos * 5000);       
 
+        if(sinOfPos < 0){
+            xParity = 0;
+        } else{
+            xParity = 1;
+        }
 
+        y = abs(cosOfPos* 5000);
 
+        if(cosOfPos < 0){
+            yParity = 0;
+        } else{
+            yParity = 1;
+        }
 
-        // while(array.detected == false){   
+        write();
+        pos+=step; 
+    }
 
-        //     //calibrate every 1000 readings  
-        //     if(calibrationCounter > 1000){
-        //         // mac2.printf("\r\ncalibrating...\r\n");
-        //         array.calibrate();
-                
-        //         // mac2.printf("\n\n");
-        //         // array.printCalibration();
-        //         // mac2.printf("\n\n");
-
-        //         calibrationCounter = 0;
-        //     }
-
-        //     array.read();
-        //     // if(calibrationCounter%20003==0){
-        //     //     array.displayValue();
-        //     // }
-        //     calibrationCounter++;
-        // }
-
-        // while(array.detected == true){
-        //     // mac2.printf("detected!");
-        //     array.read();
-        //     array.displayLEDs();
-        // }
-        // array.detected = false;
-
-        // mac2.printf("\r\n\n");
-
-        // array.printCalibration();
-        // wait_sec(5);
-
-        // mac2.printf("\r\n\n");
-
-        // for (int i=0; i<=resolution; i++){
-
-        //     frac = (float) i/resolution;
-
-        //     setX(get<0>(coords));
-        //     setY(get<1>(coords));
-
-        //     read = photoResistor;
-        //     wait_sec(stepTime);
-
-        //     // mac.printf("%f\r\n",read);
-        //     coords = circleWOffset(amplitude, frequency, xOffset, yOffset, frac);
-
-        //     if(read<0.99999){
-        //         amplitude = 0.01;
-
-        //         xOffset = get<0>(coords);
-        //         yOffset = get<1>(coords);
-                
-        //         while(read < 0.98){
-        //             read = photoResistor;
-        //             // mac.printf("%f\r\n",read);
-        //             wait_sec(0.01);
-        //         }
-        //     }
-
-        //     amplitude+=0.1/(resolution);
-
-        //     if(amplitude >= 4){
-        //         amplitude = 0.01;
-        //     }
-        // }
+}
