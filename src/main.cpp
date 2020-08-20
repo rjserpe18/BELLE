@@ -20,16 +20,28 @@ DigitalOut xMinus(PD_5);
 DigitalOut yPlus(PC_1);
 DigitalOut yMinus(PD_4);
 
-Serial mac2(USBTX, USBRX);
+//Defining the pins for SPI communication
+DigitalIn spiFlag(PC_8);
+DigitalIn xPar(PC_9);
+DigitalIn yPar(PC_10);
+
+SPISlave xBus(PE_6, PE_5, PE_2, PE_4);
+SPISlave yBus(PB_5, PB_4, PB_3, PA_4);
+
+bool xRead = 0;
+bool yRead = 0;
+
+DigitalOut xAck(PC_4);
+DigitalOut yAck(PD_3);
 
 //defining the data bits to be sent over the lines 
 volatile uint16_t x;
 volatile uint16_t y;
-volatile int xParity; 
-volatile int yParity;
+volatile bool xParity; 
+volatile bool yParity;
 
 //One half of the clocking period, effectively. Steptime of 1us gives 2us period = 0.5Mhz 
-int stepTime = 3;  //in microseconds (using wait_us())
+int stepTime = 4;  //in microseconds (using wait_us())
 
 void write(){
     //flip the sync signal 
@@ -138,9 +150,9 @@ void write(){
 
     wait_us(stepTime);
 
-    //before we end, we'll increment x and y to see
-    x = x + 0b101;
-    y = y + 0b101;
+    // //before we end, we'll increment x and y to see
+    // x = x + 0b101;
+    // y = y + 0b101;
 
     //now we're ready to start over. The next cycle starts by pulling sync and clock high, 
     //so we don't need to do that here
@@ -148,7 +160,6 @@ void write(){
 
 int main(){
 
- 
     clockPlus = 0;
     clockMinus = 1;
 
@@ -156,41 +167,44 @@ int main(){
     syncPlus = 0;
     syncMinus = 1;
 
-    x = 31353;
-    y = 15342;
+    x = 0;
+    y = 0;
  
     xParity = 0;
-    yParity = 1;
+    yParity = 0;
 
-    double cosOfPos;
-    double sinOfPos;
-    
-    double step = 0.001;
-    double pos = 0;
+    xBus.frequency(10000000);
+    yBus.frequency(10000000);
 
     while(1){
-
-        cosOfPos = cos(pos);
-        sinOfPos = sin(pos);
-
-        x = abs(sinOfPos * 5000);       
-
-        if(sinOfPos < 0){
-            xParity = 0;
-        } else{
-            xParity = 1;
-        }
-
-        y = abs(cosOfPos* 5000);
-
-        if(cosOfPos < 0){
-            yParity = 0;
-        } else{
-            yParity = 1;
-        }
-
+    
         write();
-        pos+=step; 
-    }
+        
+        if(spiFlag == 1){
+            xParity = xPar;
+            yParity = yPar;
 
+            while(xRead == 0){
+                if(xBus.receive()){
+                    x = xBus.read();
+                    xRead = !xRead;
+                    xAck = !xAck;
+                }
+            }
+
+            while(yRead == 0){
+                if(yBus.receive()){
+                    y = yBus.read();
+                    yRead = !yRead;
+                    yAck = !yAck;
+                }
+            }
+
+            xRead = !xRead;
+            yRead = !yRead;
+
+            xAck = !xAck;
+            yAck = !yAck;
+        }
+    }
 }
