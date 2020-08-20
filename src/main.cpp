@@ -25,8 +25,8 @@ DigitalIn spiFlag(PC_8);
 DigitalIn xPar(PC_9);
 DigitalIn yPar(PC_10);
 
-SPISlave xBus(PE_6, PE_5, PE_2, PE_4);
-SPISlave yBus(PB_5, PB_4, PB_3, PA_4);
+// SPISlave xBus(PE_6, PE_5, PE_2, PE_4);
+// SPISlave yBus(PB_5, PB_4, PB_3, PA_4);
 
 bool xRead = 0;
 bool yRead = 0;
@@ -37,13 +37,37 @@ DigitalOut yAck(PD_3);
 //defining the data bits to be sent over the lines 
 volatile uint16_t x;
 volatile uint16_t y;
+
+volatile float xFloat;
+volatile float yFloat;
+
 volatile bool xParity; 
 volatile bool yParity;
 
 //One half of the clocking period, effectively. Steptime of 1us gives 2us period = 0.5Mhz 
 int stepTime = 4;  //in microseconds (using wait_us())
 
+void coordsTo16(){
+    x = xFloat * UINT16_MAX;
+    y = yFloat * UINT16_MAX;
+
+    if(xFloat < 0){
+        xParity = 0;
+    } else{
+        xParity = 1;
+    }
+
+    if(yFloat < 0){
+        yParity = 0;
+    } else{
+        yParity = 1;
+    }
+}
+
 void write(){
+
+    coordsTo16();
+
     //flip the sync signal 
     syncPlus = !syncPlus;
     syncMinus = !syncMinus; 
@@ -167,44 +191,79 @@ int main(){
     syncPlus = 0;
     syncMinus = 1;
 
+    xFloat = 0;
+    yFloat = 0;
+
     x = 0;
     y = 0;
  
     xParity = 0;
     yParity = 0;
 
-    xBus.frequency(10000000);
-    yBus.frequency(10000000);
+    float pos = 0;
+    float step = 0.001;
+
+    // xBus.frequency(10000000);
+    // yBus.frequency(10000000);
 
     while(1){
     
+        xFloat = 0.5;
+        yFloat = 0.5;
+
+        //coordsTo16();
         write();
-        
-        if(spiFlag == 1){
-            xParity = xPar;
-            yParity = yPar;
+        wait_ms(500);
 
-            while(xRead == 0){
-                if(xBus.receive()){
-                    x = xBus.read();
-                    xRead = !xRead;
-                    xAck = !xAck;
-                }
-            }
+        xFloat = 0.9;
+        yFloat = 0.9;
 
-            while(yRead == 0){
-                if(yBus.receive()){
-                    y = yBus.read();
-                    yRead = !yRead;
-                    yAck = !yAck;
-                }
-            }
+        //coordsTo16();
+        write();
+        wait_ms(500);
 
-            xRead = !xRead;
-            yRead = !yRead;
+        xFloat = 0.5;
+        yFloat = 0.5;
 
-            xAck = !xAck;
-            yAck = !yAck;
-        }
+        //coordsTo16();
+        write();
+        wait_ms(500);
+
+        xFloat = -0.5;
+        yFloat = -0.5;
+
+        //coordsTo16();
+        write();
+        wait_ms(500);
+
+        xFloat = 0;
+        yFloat = 0;
+
+        //coordsTo16();
+        write();
+        //wait_ms(500);
+
+        // if(spiFlag == 1){
+        //     xParity = xPar;
+        //     yParity = yPar;
+
+        //     while(xRead == 0){
+        //         x = xBus.read();
+        //         xRead = !xRead;
+        //         xAck = 1;
+        //     }
+
+        //     while(yRead == 0){
+        //         y = yBus.read();
+        //         yRead = !yRead;
+        //         yAck = 1;
+        //     }
+
+        //     xRead = !xRead;
+        //     yRead = !yRead;
+
+        //     xAck = !xAck;
+        //     yAck = !yAck;
+        // }
     }
 }
