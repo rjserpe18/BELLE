@@ -20,20 +20,6 @@ DigitalOut xMinus(PD_5);
 DigitalOut yPlus(PC_1);
 DigitalOut yMinus(PD_4);
 
-//Defining the pins for SPI communication
-DigitalIn spiFlag(PC_8);
-DigitalIn xPar(PC_9);
-DigitalIn yPar(PC_10);
-
-// SPISlave xBus(PE_6, PE_5, PE_2, PE_4);
-// SPISlave yBus(PB_5, PB_4, PB_3, PA_4);
-
-bool xRead = 0;
-bool yRead = 0;
-
-DigitalOut xAck(PC_4);
-DigitalOut yAck(PD_3);
-
 //defining the data bits to be sent over the lines 
 volatile uint16_t x;
 volatile uint16_t y;
@@ -44,24 +30,21 @@ volatile float yFloat;
 volatile bool xParity; 
 volatile bool yParity;
 
+float frequency = 5;
+float period = 1/frequency;
+int stepCount = 876;
+float wait_time = period/stepCount;
+
 //One half of the clocking period, effectively. Steptime of 1us gives 2us period = 0.5Mhz 
 int stepTime = 4;  //in microseconds (using wait_us())
 
-void coordsTo16(){
-    x = xFloat * UINT16_MAX;
-    y = yFloat * UINT16_MAX;
-
-    if(xFloat < 0){
-        xParity = 0;
-    } else{
-        xParity = 1;
-    }
-
-    if(yFloat < 0){
-        yParity = 0;
-    } else{
-        yParity = 1;
-    }
+void coordsTo16(){    
+    //this could likely be sped up...
+    xFloat = xFloat/2;
+    yFloat = yFloat/2;
+    
+    x = (0.5 + xFloat) * UINT16_MAX;
+    y = (0.5 + yFloat) * UINT16_MAX;
 }
 
 void write(){
@@ -155,14 +138,21 @@ void write(){
     clockPlus = !clockPlus;
     clockMinus = !clockMinus;
 
-    //send the parity bit
-    xPlus = xParity;
-    xMinus = !xPlus;
+    //send the parity bit --- after some testing, seems to not really do anything?? We'll just set it to zero.
+    // xPlus = xParity;
+    // xMinus = !xPlus;
 
-    yPlus = yParity;
-    yMinus = !yPlus;
+    xPlus = 0;
+    xMinus = 1;
+    
+    yPlus = 0;
+    yMinus = 1;
 
-        //flip the sync bit to signal communication of parity bit
+
+    // yPlus = yParity;
+    // yMinus = !yPlus;
+
+    //flip the sync bit to signal communication of parity bit
     syncPlus = !syncPlus;
     syncMinus = !syncPlus;
 
@@ -180,6 +170,17 @@ void write(){
 
     //now we're ready to start over. The next cycle starts by pulling sync and clock high, 
     //so we don't need to do that here
+}
+
+void updateFrequency( float newFrequency){
+    frequency = newFrequency;
+    period = 1/frequency;
+    wait_time = period/stepCount;
+}
+
+void updateStepCount(int newStepCount){
+    stepCount = newStepCount;
+    wait_time = period/stepCount;
 }
 
 int main(){
@@ -200,70 +201,25 @@ int main(){
     xParity = 0;
     yParity = 0;
 
-    float pos = 0;
-    float step = 0.001;
+    float pi = 3.14159;
 
-    // xBus.frequency(10000000);
-    // yBus.frequency(10000000);
+    frequency = 1;
+    period = 1/frequency;
+    stepCount = 1000*frequency;
+    wait_time = period/stepCount;
+
+    write();
 
     while(1){
-    
-        xFloat = 0.5;
-        yFloat = 0.5;
-
-        //coordsTo16();
-        write();
-        wait_ms(500);
-
-        xFloat = 0.9;
-        yFloat = 0.9;
-
-        //coordsTo16();
-        write();
-        wait_ms(500);
-
-        xFloat = 0.5;
-        yFloat = 0.5;
-
-        //coordsTo16();
-        write();
-        wait_ms(500);
-
-        xFloat = -0.5;
-        yFloat = -0.5;
-
-        //coordsTo16();
-        write();
-        wait_ms(500);
-
-        xFloat = 0;
-        yFloat = 0;
-
-        //coordsTo16();
-        write();
-        //wait_ms(500);
-
-        // if(spiFlag == 1){
-        //     xParity = xPar;
-        //     yParity = yPar;
-
-        //     while(xRead == 0){
-        //         x = xBus.read();
-        //         xRead = !xRead;
-        //         xAck = 1;
-        //     }
-
-        //     while(yRead == 0){
-        //         y = yBus.read();
-        //         yRead = !yRead;
-        //         yAck = 1;
-        //     }
-
-        //     xRead = !xRead;
-        //     yRead = !yRead;
-
-        //     xAck = !xAck;
-        //     yAck = !yAck;
-        // }
+        for(int i=0; i<stepCount; i++){
+            xFloat = 0.5*cos(2*pi*((float)i/stepCount));
+            yFloat = 0.5*sin(2*pi*((float)i/stepCount));
+            write();
+            wait(wait_time);
+        }
+        
+        if(frequency <= 5){
+            updateFrequency(2*frequency);
+        }
     }
 }
