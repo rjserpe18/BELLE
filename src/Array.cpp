@@ -152,7 +152,7 @@ void Array::displayLEDs(){
 
         if(sensors[i].read > sensors[i].threshold ){
             sensors[i].led->write(1);
-        }ß
+        }
         else{
             sensors[i].led->write(0);
         }
