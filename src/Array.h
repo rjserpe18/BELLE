@@ -11,6 +11,9 @@ class Array{
         Array();
         bool detected;
 
+
+        DigitalOut* activation_indicator;
+
         float yDiff;
         float xDiff;
 

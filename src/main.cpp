@@ -94,6 +94,8 @@ int main(){
     array.sensors[2] = bottomLeft;
     array.sensors[3] = bottomRight;
 
+    array.activation_indicator = &activation_indicator;
+
     //initialize the values and calibrate the sensors 
     
     //before the initial calibration, we need to set the thresholds all high so that it doesn't get tripped initially
@@ -101,7 +103,7 @@ int main(){
         array.sensors[i].threshold = 1;
     }
 
-    activation_indicator = 0;
+    array.activation_indicator->write(0);
 
     array.calibrate();
     array.blink();
@@ -114,7 +116,7 @@ int main(){
 
     while(1){
         array.read();
-        array.displayLEDs();
+        // array.displayLEDs();
         i++;
 
         if(i==100){

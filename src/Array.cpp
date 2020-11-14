@@ -11,7 +11,7 @@ void Array::calibrate(){
 
     float oldThreshold [4];
     bool trippedFlag = 0;
-    
+
     for(int i=0; i<4; i++){
         oldThreshold[i] = sensors[i].threshold;
 
@@ -74,10 +74,13 @@ void Array::read(){
     for(int i=0; i<4; i++){
         sensors[i].read = sensors[i].sensor->read();
 
-        // if(sensors[i].read > sensors[i].threshold){
-        //     detected = true;
-        //     break;
-        // }  
+        if(sensors[i].read > sensors[i].threshold){
+            sensors[i].led->write(1);
+            activation_indicator->write(1);
+        }
+        else{
+            activation_indicator->write(0);
+        }  
     } 
 }
 
@@ -152,6 +155,7 @@ void Array::displayLEDs(){
 
         if(sensors[i].read > sensors[i].threshold ){
             sensors[i].led->write(1);
+            activation_indicator->write(1);
         }
         else{
             sensors[i].led->write(0);
