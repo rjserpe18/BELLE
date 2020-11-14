@@ -52,7 +52,7 @@ void Array::calibrate(){
         for(int i=0; i<4; i++){
             sensors[i].offset = sensors[i].offset/1000;
             sensors[i].margin = abs(sensors[i].max-sensors[i].offset);
-            sensors[i].threshold = sensors[i].offset+5*sensors[i].margin;
+            sensors[i].threshold = sensors[i].offset+1.5*sensors[i].margin;
         } 
     }
     else{
@@ -74,10 +74,10 @@ void Array::read(){
     for(int i=0; i<4; i++){
         sensors[i].read = sensors[i].sensor->read();
 
-        if(sensors[i].read > sensors[i].threshold){
-            detected = true;
-            break;
-        }  
+        // if(sensors[i].read > sensors[i].threshold){
+        //     detected = true;
+        //     break;
+        // }  
     } 
 }
 
@@ -148,13 +148,11 @@ void Array::blink(){
 }
 
 void Array::displayLEDs(){
-
-
     for(int i=0; i<4; i++){
 
         if(sensors[i].read > sensors[i].threshold ){
             sensors[i].led->write(1);
-        }
+        }ß
         else{
             sensors[i].led->write(0);
         }
