@@ -258,11 +258,11 @@ int main(){
                 write();
                 wait(0.000001);
 
-                // if(activation_indicator){
-                //     while(activation_indicator != 0){
-                //         wait(0.001);
-                //     }
-                // }
+                if(activation_indicator){
+                    while(activation_indicator != 0){
+                        wait(0.001);
+                    }
+                }
 
                 if(activation_button){
                     while(activation_button != 0){
