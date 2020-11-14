@@ -3,14 +3,18 @@ using namespace std;
 #include "mbed.h"
 #include <math.h>
 #include "Array.h"
-Array::Array(){}
+
+
+Array::Array(){
+    detected = 0;
+}
 
 Serial mac(USBTX, USBRX);
 
 void Array::calibrate(){
 
     float oldThreshold [4];
-    bool trippedFlag = 0;
+    detected = 0;
 
     for(int i=0; i<4; i++){
         oldThreshold[i] = sensors[i].threshold;
@@ -29,7 +33,7 @@ void Array::calibrate(){
             //first check if the target was hit- in this case, we need to throw out the calibration
             if(sensors[j].read > sensors[j].threshold){
                 //blink();
-                trippedFlag = 1;
+                detected = 1;
                 break;
             }
 
@@ -41,18 +45,18 @@ void Array::calibrate(){
             }
             sensors[j].offset+=sensors[j].read;
         } 
-        if(trippedFlag == 1){
+        if(detected == 1){
             break;
         }
         wait_ms(10);
     }
 
     //if nothing was tripped during calibration, generate new calibration data 
-    if(trippedFlag == 0){
+    if(detected == 0){
         for(int i=0; i<4; i++){
             sensors[i].offset = sensors[i].offset/1000;
             sensors[i].margin = abs(sensors[i].max-sensors[i].offset);
-            sensors[i].threshold = sensors[i].offset+1.5*sensors[i].margin;
+            sensors[i].threshold = sensors[i].offset+10*sensors[i].margin;
         } 
     }
     else{
@@ -71,17 +75,16 @@ void Array::printCalibration(){
 }
 
 void Array::read(){
+
+    detected = 0;
     for(int i=0; i<4; i++){
         sensors[i].read = sensors[i].sensor->read();
 
         if(sensors[i].read > sensors[i].threshold){
-            sensors[i].led->write(1);
-            activation_indicator->write(1);
+            detected = 1;
         }
-        else{
-            activation_indicator->write(0);
-        }  
-    } 
+    }
+    activation_indicator->write(detected);
 }
 
 // void Array::read(){
@@ -152,10 +155,8 @@ void Array::blink(){
 
 void Array::displayLEDs(){
     for(int i=0; i<4; i++){
-
         if(sensors[i].read > sensors[i].threshold ){
             sensors[i].led->write(1);
-            activation_indicator->write(1);
         }
         else{
             sensors[i].led->write(0);

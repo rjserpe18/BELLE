@@ -116,7 +116,7 @@ int main(){
 
     while(1){
         array.read();
-        // array.displayLEDs();
+        array.displayLEDs();
         i++;
 
         if(i==100){
