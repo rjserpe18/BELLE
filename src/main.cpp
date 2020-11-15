@@ -10,7 +10,6 @@
 #include "Galvo.h"
 #include "math.h"
 
-
 using namespace std;
 
 //define LED activation representation pins
