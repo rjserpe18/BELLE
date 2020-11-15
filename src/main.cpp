@@ -60,8 +60,8 @@ void coordsTo16(){
     // y = (0.5 + yFloat) * UINT16_MAX;
 
     //in fact it can! Thanks myles
-    x = (uint16_t)  ( ( ((int32_t) (xFloat * UINT16_MAX)) + UINT16_MAX)/2);
-    y = (uint16_t)  ( ( ((int32_t) (yFloat * UINT16_MAX)) + UINT16_MAX)/2);
+    x = (uint16_t)  ( ( ((int32_t) (xFloat * UINT16_MAX/2)) + UINT16_MAX/2) );
+    y = (uint16_t)  ( ( ((int32_t) (yFloat * UINT16_MAX/2)) + UINT16_MAX/2) );
 }
 
 void write(){
