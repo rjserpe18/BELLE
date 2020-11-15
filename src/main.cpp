@@ -226,11 +226,6 @@ int main(){
     xParity = 0;
     yParity = 0;
 
-    // frequency = ;
-    // period = 1/frequency;
-    // stepCount = 1000*frequency;
-    // wait_time = period/stepCount;
-
     stepCount = 200;
 
     write();
