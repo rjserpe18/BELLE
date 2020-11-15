@@ -10,6 +10,7 @@
 #include "Galvo.h"
 #include "math.h"
 
+#define pi 3.141592
 
 using namespace std;
 
@@ -26,14 +27,8 @@ DigitalOut xMinus(PD_5);
 DigitalOut yPlus(PC_1);
 DigitalOut yMinus(PD_4);
 
-DigitalIn activation_indicator(PF_13);
+InterruptIn activation_indicator(PF_13);
 DigitalIn activation_button(PG_0);
-
-// DigitalOut xPlus(PF_3);
-// DigitalOut xMinus(PD_4);
-
-// DigitalOut yPlus(PC_3);
-// DigitalOut yMinus(PD_5);
 
 //initialize serial monitor
 Serial mac2(USBTX, USBRX);
@@ -58,11 +53,15 @@ int stepTime = 2;  //in microseconds (using wait_us())
 
 void coordsTo16(){    
     //this could likely be sped up...
-    xFloat = xFloat/2;
-    yFloat = yFloat/2;
-    
-    x = (0.5 + xFloat) * UINT16_MAX;
-    y = (0.5 + yFloat) * UINT16_MAX;
+    // xFloat = xFloat/2;
+    // yFloat = yFloat/2;
+
+    // x = (0.5 + xFloat) * UINT16_MAX;
+    // y = (0.5 + yFloat) * UINT16_MAX;
+
+    //in fact it can! Thanks myles
+    x = (uint16_t)  ( ( ((int32_t) (xFloat * UINT16_MAX)) + UINT16_MAX)/2);
+    y = (uint16_t)  ( ( ((int32_t) (yFloat * UINT16_MAX)) + UINT16_MAX)/2);
 }
 
 void write(){
@@ -205,6 +204,10 @@ void wait_sec(float time){
     wait_us(1000000*time);
 }
 
+void hit_handler(void){
+    ((void)0);
+}
+
 int main(){
 
     clockPlus = 0;
@@ -222,8 +225,6 @@ int main(){
  
     xParity = 0;
     yParity = 0;
-
-    float pi = 3.14159;
 
     // frequency = ;
     // period = 1/frequency;
@@ -245,9 +246,9 @@ int main(){
     float mult = 0.05;
     float internal_mult = 0;
 
+    activation_indicator.rise(&hit_handler);
+
     while(1){
-
-
         for(int j=0; j<20; j++){
 
             internal_mult = (float)mult*j;
@@ -269,15 +270,7 @@ int main(){
                         wait(0.001);
                     }
                 }
-
-
             }
-
         }
-        
-        
-        // if(frequency <= 5){
-        //     updateFrequency(2*frequency);
-        // }
     }
 }
