@@ -40,13 +40,19 @@ volatile uint16_t y;
 volatile float xFloat;
 volatile float yFloat;
 
+volatile float xOffset;
+volatile float yOffset;
+
 volatile bool xParity; 
 volatile bool yParity;
 
 float frequency = 5;
 float period = 1/frequency;
-int stepCount = 876;
+int stepCount = 200;
 float wait_time = period/stepCount;
+
+float scaling_factor = 0.1;
+float inc = 0.05;
 
 //One half of the clocking period, effectively. Steptime of 1us gives 2us period = 0.5Mhz 
 int stepTime = 2;  //in microseconds (using wait_us())
@@ -60,8 +66,8 @@ void coordsTo16(){
     // y = (0.5 + yFloat) * UINT16_MAX;
 
     //in fact it can! Thanks myles
-    x = (uint16_t)  ( ( ((int32_t) (xFloat * UINT16_MAX/2)) + UINT16_MAX/2) );
-    y = (uint16_t)  ( ( ((int32_t) (yFloat * UINT16_MAX/2)) + UINT16_MAX/2) );
+    x = (uint16_t)  ( ( ((int32_t) (xFloat * UINT16_MAX)) + UINT16_MAX)/2);
+    y = (uint16_t)  ( ( ((int32_t) (yFloat * UINT16_MAX)) + UINT16_MAX)/2 );
 }
 
 void write(){
@@ -205,7 +211,15 @@ void wait_sec(float time){
 }
 
 void hit_handler(void){
-    ((void)0);
+    scaling_factor = 0.1;
+
+    xOffset = xFloat;
+    yOffset = yFloat;
+
+    while(activation_indicator)
+    {
+        wait_ns(10);
+    }
 }
 
 int main(){
@@ -220,13 +234,14 @@ int main(){
     xFloat = 0;
     yFloat = 0;
 
+    xOffset = 0;
+    yOffset = 0;
+
     x = 0;
     y = 0;
  
     xParity = 0;
     yParity = 0;
-
-    stepCount = 200;
 
     write();
 
@@ -234,38 +249,34 @@ int main(){
     float cosTable [stepCount];
 
     for(int i=0; i<stepCount; i++){
-        sinTable[i] = 0.5*cos(2*pi*((float)i/stepCount));
-        cosTable[i] = 0.5*sin(2*pi*((float)i/stepCount));
+        sinTable[i] = 0.9 * cos(2*pi*((float)i/stepCount));
+        cosTable[i] = 0.9 * sin(2*pi*((float)i/stepCount));
     }
-
-    float mult = 0.05;
-    float internal_mult = 0;
 
     activation_indicator.rise(&hit_handler);
 
     while(1){
-        for(int j=0; j<20; j++){
 
-            internal_mult = (float)mult*j;
+        //TODO -> Ideally i'd like to set i to a specified value edu
+        for(int i=0; i<stepCount; i++){
+            xFloat = scaling_factor*cosTable[i] + xOffset;
+            yFloat = scaling_factor*sinTable[i] + yOffset;
 
-            for(int i=0; i<stepCount; i++){
-                xFloat = internal_mult*cosTable[i];
-                yFloat = internal_mult*sinTable[i];
-                write();
-                wait(0.000001);
-
-                if(activation_indicator){
-                    while(activation_indicator != 0){
-                        wait(0.001);
-                    }
-                }
-
-                if(activation_button){
-                    while(activation_button != 0){
-                        wait(0.001);
-                    }
-                }
+            if(xFloat >= 0.9 || yFloat >= 0.9){
+                xFloat = 0;
+                yFloat = 0;
             }
+
+            write();
+            wait(0.0001);
         }
+        
+        scaling_factor += inc;
+
+        if(scaling_factor >= 0.9){
+            scaling_factor = 0.1;
+        }
+        
+
     }
 }
