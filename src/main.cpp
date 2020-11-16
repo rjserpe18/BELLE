@@ -262,13 +262,14 @@ int main(){
             xFloat = scaling_factor*cosTable[i] + xOffset;
             yFloat = scaling_factor*sinTable[i] + yOffset;
 
-            if(xFloat >= 0.9 || yFloat >= 0.9){
+            if(xFloat >= 0.95 || yFloat >= 0.95){
                 xFloat = 0;
                 yFloat = 0;
+                scaling_factor = 0.1;
             }
 
             write();
-            wait(0.0001);
+            //wait(0.0001);
         }
         
         scaling_factor += inc;

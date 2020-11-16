@@ -144,7 +144,6 @@ void Array::blink(){
     for(int i=0; i<4; i++){
         sensors[i].led->write(0);
     }
-
 }
 
 void Array::displayLEDs(){
