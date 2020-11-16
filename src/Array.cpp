@@ -52,7 +52,7 @@ void Array::calibrate(){
         for(int i=0; i<4; i++){
             sensors[i].offset = sensors[i].offset/1000;
             sensors[i].margin = abs(sensors[i].max-sensors[i].offset);
-            sensors[i].threshold = sensors[i].offset+1.5*sensors[i].margin;
+            sensors[i].threshold = sensors[i].offset+1.2*sensors[i].margin;
         } 
     }
     else{

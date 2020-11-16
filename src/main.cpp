@@ -48,14 +48,14 @@ volatile bool yParity;
 
 float frequency = 5;
 float period = 1/frequency;
-int stepCount = 200;
+int stepCount = 250;
 float wait_time = period/stepCount;
 
 float scaling_factor = 0.1;
 float inc = 0.05;
 
 //One half of the clocking period, effectively. Steptime of 1us gives 2us period = 0.5Mhz 
-int stepTime = 2;  //in microseconds (using wait_us())
+int stepTime = 1;  //in microseconds (using wait_us())
 
 void coordsTo16(){    
     //this could likely be sped up...
@@ -171,7 +171,6 @@ void write(){
     yPlus = 0;
     yMinus = 1;
 
-
     // yPlus = yParity;
     // yMinus = !yPlus;
 
@@ -277,7 +276,5 @@ int main(){
         if(scaling_factor >= 0.9){
             scaling_factor = 0.1;
         }
-        
-
     }
 }
