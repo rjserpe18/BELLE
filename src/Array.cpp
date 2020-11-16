@@ -26,6 +26,24 @@ void Array::calibrate(){
     
     //gathering 1000 points for calibration
     for(int i=0; i<1000; i++){
+
+        if(i%40 < 10){
+            sensors[3].led->write(0);
+            sensors[0].led->write(1);
+        }
+        if(i%40 < 20 && i%40 > 10){
+            sensors[0].led->write(0);
+            sensors[1].led->write(1);
+        }
+        if(i%40 < 30 && i%40 > 20){
+            sensors[1].led->write(0);
+            sensors[2].led->write(1);
+        }
+        if(i%40 > 30){
+            sensors[2].led->write(0);
+            sensors[3].led->write(1);
+        }
+
         //loop over each of the sensors
         for(int j=0; j<4;j++){
             sensors[j].read = sensors[j].sensor->read();
