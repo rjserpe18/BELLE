@@ -118,10 +118,10 @@ int main(){
         array.displayLEDs();
         i++;
 
-        if(i==100){
-            array.displayValue();
-            i=0;
-        }
-        wait_sec(0.01);
+        // if(i==100){
+        //     array.displayValue();
+        //     i=0;
+        // }
+        //wait_sec(0.01);
     }
 }
