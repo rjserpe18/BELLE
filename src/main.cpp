@@ -59,7 +59,7 @@ int scale_index = 0;
 volatile int loop_index = 0;
 volatile float current_scale;
 
-const float step_interval = 0.05;
+const float step_interval = 0.01;
 const int step_resolution = (int)((float)1/step_interval);
 
 volatile float scales [step_resolution];
