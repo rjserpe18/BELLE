@@ -65,7 +65,6 @@ const int step_resolution = (int)((float)1/step_interval);
 volatile float scales [step_resolution];
 volatile float step_counts [step_resolution];
 
-
 //One half of the clocking period, effectively. Steptime of 1us gives 2us period = 0.5Mhz 
 int stepTime = 2;  //in microseconds (using wait_us())
 
@@ -396,7 +395,6 @@ int main(){
     int local_index;
 
     while(1){
-
         current_scale = scales[scale_index];
         step_count = step_counts[scale_index];
 
