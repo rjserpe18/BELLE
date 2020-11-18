@@ -115,8 +115,10 @@ int main(){
 
     while(1){
         array.read();
-        array.displayLEDs();
-        i++;
+        // array.displayLEDs();
+        // array.displayValue();
+        // wait_sec(1);
+        //i++;
 
         // if(i==100){
         //     array.displayValue();
