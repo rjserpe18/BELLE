@@ -59,7 +59,7 @@ int scale_index = 0;
 volatile int loop_index = 0;
 volatile float current_scale;
 
-const float step_interval = 0.01;
+const float step_interval = 0.025;
 const int step_resolution = (int)((float)1/step_interval);
 
 volatile float scales [step_resolution];
@@ -386,7 +386,7 @@ int main(){
 
     for(int i=0; i<step_resolution; i++){
     	scales[i] = step_interval * (i+1);
-        step_counts[i] = ceil(300*(scales[i])+30);
+        step_counts[i] = ceil(300*(scales[i])+50);
     }
 
     //attach rising edge interrupt to pin from sensor board 
