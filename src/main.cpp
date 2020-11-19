@@ -339,6 +339,8 @@ void hit_handler(void){
     xOffset = xFloat;
     yOffset = yFloat;
 
+    //while(1);
+
     while(activation_indicator)
     {
         wait_ns(10);
@@ -383,9 +385,10 @@ int main(){
         cosTable_16[i] = (uint16_t)  ( ( ((int32_t) (cosTable[i] * UINT16_MAX)) + UINT16_MAX)/2);
     }
 
+    //calculate step counts
     for(int i=0; i<step_resolution; i++){
     	scales[i] = step_interval * (i+1);
-        step_counts[i] = ceil(300*(scales[i])+50);
+        step_counts[i] = ceil(300*(scales[i])+30);
     }
 
     //attach rising edge interrupt to pin from sensor board 
@@ -397,12 +400,19 @@ int main(){
     while(1){
         current_scale = scales[scale_index];
         step_count = step_counts[scale_index];
+        
+            //draw the biggest circle 
+        // for(int i=0; i<master_table_resolution; i++){
+        //     xFloat = 1*cosTable[i];
+        //     yFloat = 1*sinTable[i];
+        
+        //     write();
+        //     wait_sec(0.01);
+        // }
 
         for(int i=0; i<step_resolution; i++){
             current_scale = scales[scale_index];
             step_count = step_counts[scale_index];
-
-            //printf("Current Scale: %f, Current Step Count: %d\r\n",current_scale, step_count);
 
             for(loop_index=0; loop_index<step_count; loop_index++){
                 
@@ -414,23 +424,23 @@ int main(){
                 if(xFloat > 1 || yFloat > 1){
                     xFloat = 0;
                     yFloat = 0;
+
+                    xOffset = 0;
+                    yOffset = 0;
                     
                     loop_index = 0;
                     scale_index = 0;
-                    current_scale = scales[scale_index];              
-                    step_count = step_counts[scale_index];
+                    current_scale = scales[0];              
+                    step_count = step_counts[0];
+                    continue;
                 }
-                //printf("%f, %f\r\n",xFloat, yFloat);
                 write();
             }
-
-            
 
             scale_index+=1;
             if(scale_index == step_resolution){
                 scale_index = 0;
             }
-            //printf("\r\n");
         }
     }
 }
