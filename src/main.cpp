@@ -401,6 +401,10 @@ int main(){
         current_scale = scales[scale_index];
         step_count = step_counts[scale_index];
         
+        // xFloat = 0.0125;
+        // yFloat = -0.45;
+        // write();
+
             //draw the biggest circle 
         // for(int i=0; i<master_table_resolution; i++){
         //     xFloat = 1*cosTable[i];
