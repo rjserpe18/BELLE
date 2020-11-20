@@ -401,8 +401,8 @@ int main(){
         current_scale = scales[scale_index];
         step_count = step_counts[scale_index];
         
-        // xFloat = 0.0125;
-        // yFloat = -0.45;
+        // xFloat = -1;
+        // yFloat = 0;
         // write();
 
             //draw the biggest circle 
