@@ -51,7 +51,7 @@ volatile int step_count;
 float wait_time;
 
 float scaling_factor = 0.50;
-float inc = 0.05;
+float inc = 0.005;
 
 const int master_table_resolution = 1000;
 int scale_index = 0;
@@ -59,7 +59,7 @@ int scale_index = 0;
 volatile int loop_index = 0;
 volatile float current_scale;
 
-const float step_interval = 0.005;
+const float step_interval = 0.01;
 const int step_resolution = (int)((float)1/step_interval);
 
 volatile float scales [step_resolution];
@@ -388,7 +388,7 @@ int main(){
     //calculate step counts
     for(int i=0; i<step_resolution; i++){
     	scales[i] = step_interval * (i+1);
-        step_counts[i] = ceil(300*(scales[i])+40);
+        step_counts[i] = ceil(300*(scales[i])+30);
     }
 
     //attach rising edge interrupt to pin from sensor board 
@@ -401,50 +401,41 @@ int main(){
         current_scale = scales[scale_index];
         step_count = step_counts[scale_index];
         
-        // xFloat = -1;
-        // yFloat = 0;
-        // write();
+        xFloat = 0.305;
+        yFloat = -0.0;
+        write();
 
-            //draw the biggest circle 
-        // for(int i=0; i<master_table_resolution; i++){
-        //     xFloat = 1*cosTable[i];
-        //     yFloat = 1*sinTable[i];
-        
-        //     write();
-        //     wait_sec(0.01);
-        // }
+        // for(int i=0; i<step_resolution; i++){
+        //     current_scale = scales[scale_index];
+        //     step_count = step_counts[scale_index];
 
-        for(int i=0; i<step_resolution; i++){
-            current_scale = scales[scale_index];
-            step_count = step_counts[scale_index];
-
-            for(loop_index=0; loop_index<step_count; loop_index++){
+        //     for(loop_index=0; loop_index<step_count; loop_index++){
                 
-                local_index = floor((float)master_table_resolution/step_count * loop_index);
+        //         local_index = floor((float)master_table_resolution/step_count * loop_index);
 
-                xFloat = current_scale*cosTable[local_index] + xOffset;
-                yFloat = current_scale*sinTable[local_index] + yOffset;
+        //         xFloat = current_scale*cosTable[local_index] + xOffset;
+        //         yFloat = current_scale*sinTable[local_index] + yOffset;
 
-                if(xFloat > 1 || yFloat > 1){
-                    xFloat = 0;
-                    yFloat = 0;
+        //         if(xFloat > 1 || yFloat > 1){
+        //             xFloat = 0;
+        //             yFloat = 0;
 
-                    xOffset = 0;
-                    yOffset = 0;
+        //             xOffset = 0;
+        //             yOffset = 0;
                     
-                    loop_index = 0;
-                    scale_index = 0;
-                    current_scale = scales[0];              
-                    step_count = step_counts[0];
-                    continue;
-                }
-                write();
-            }
+        //             loop_index = 0;
+        //             scale_index = 0;
+        //             current_scale = scales[0];              
+        //             step_count = step_counts[0];
+        //             continue;
+        //         }
+        //         write();
+        //     }
 
-            scale_index+=1;
-            if(scale_index == step_resolution){
-                scale_index = 0;
-            }
-        }
+        //     scale_index+=1;
+        //     if(scale_index == step_resolution){
+        //         scale_index = 0;
+        //     }
+        // }
     }
 }
