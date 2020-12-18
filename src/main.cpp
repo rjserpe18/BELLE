@@ -10,7 +10,6 @@
 
 #include "math.h"
 
-
 #define pi 3.141592
 
 using namespace std;
@@ -397,45 +396,50 @@ int main(){
     scale_index = 0;
     int local_index;
 
+    bool tracking = true;
+
     while(1){
         current_scale = scales[scale_index];
         step_count = step_counts[scale_index];
         
-        xFloat = 0.305;
-        yFloat = -0.0;
-        write();
+        if(tracking){
+            for(int i=0; i<step_resolution; i++){
+                current_scale = scales[scale_index];
+                step_count = step_counts[scale_index];
 
-        // for(int i=0; i<step_resolution; i++){
-        //     current_scale = scales[scale_index];
-        //     step_count = step_counts[scale_index];
-
-        //     for(loop_index=0; loop_index<step_count; loop_index++){
-                
-        //         local_index = floor((float)master_table_resolution/step_count * loop_index);
-
-        //         xFloat = current_scale*cosTable[local_index] + xOffset;
-        //         yFloat = current_scale*sinTable[local_index] + yOffset;
-
-        //         if(xFloat > 1 || yFloat > 1){
-        //             xFloat = 0;
-        //             yFloat = 0;
-
-        //             xOffset = 0;
-        //             yOffset = 0;
+                for(loop_index=0; loop_index<step_count; loop_index++){
                     
-        //             loop_index = 0;
-        //             scale_index = 0;
-        //             current_scale = scales[0];              
-        //             step_count = step_counts[0];
-        //             continue;
-        //         }
-        //         write();
-        //     }
+                    local_index = floor((float)master_table_resolution/step_count * loop_index);
 
-        //     scale_index+=1;
-        //     if(scale_index == step_resolution){
-        //         scale_index = 0;
-        //     }
-        // }
+                    xFloat = current_scale*cosTable[local_index] + xOffset;
+                    yFloat = current_scale*sinTable[local_index] + yOffset;
+
+                    if(xFloat > 1 || yFloat > 1){
+                        xFloat = 0;
+                        yFloat = 0;
+
+                        xOffset = 0;
+                        yOffset = 0;
+                        
+                        loop_index = 0;
+                        scale_index = 0;
+                        current_scale = scales[0];              
+                        step_count = step_counts[0];
+                        continue;
+                    }
+                    write();
+                }
+
+                scale_index+=1;
+                if(scale_index == step_resolution){
+                    scale_index = 0;
+                }
+            }
+        }
+        else{
+            xFloat = 0.305;
+            yFloat = -0.0;
+            write();
+        }
     }
 }
